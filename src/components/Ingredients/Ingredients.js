@@ -8,15 +8,23 @@ const Ingredients = () => {
     const [userIngredients, setUserIngredients] = useState([]);
 
     const addIngredientHandler = ingredient => {
-        // ...ingredientと書くことでわざわざtitle, amount等を指定しなくて良くなる
-        setUserIngredients(prevState => [
-            ...prevState,
-            {id: Math.random().toString(), ...ingredient}
-        ]);
+        fetch('https://react-hooks-update-9d1bf.firebaseio.com/ingredients.json', {
+            method: 'POST',
+            body: JSON.stringify(ingredient),
+            headers: {'Content-Type': 'application/json'}
+        }).then(response => {
+            return response.json();
+        }).then(responseData => {
+            setUserIngredients(prevState => [
+                ...prevState,
+                // ...ingredientと書くことでわざわざtitle, amount等を指定しなくて良くなる
+                {id: responseData.name, ...ingredient}
+            ]);
+        });
+
     };
 
     const removeIngredientHandler = id => {
-        // ...ingredientと書くことでわざわざtitle, amount等を指定しなくて良くなる
         setUserIngredients(prevState => {
             return prevState.filter(ing => ing.id !== id);
         });
