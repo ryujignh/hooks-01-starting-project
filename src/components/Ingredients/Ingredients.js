@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from "./IngredientList";
+import ErrorModal from "../UI/ErrorModal";
 import Search from './Search';
 
 const Ingredients = () => {
     const [userIngredients, setUserIngredients] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const filteredIngredientsHandler = useCallback(filteredIngredients => {
         setUserIngredients(filteredIngredients);
@@ -28,6 +30,8 @@ const Ingredients = () => {
                 // ...ingredientと書くことでわざわざtitle, amount等を指定しなくて良くなる
                 {id: responseData.name, ...ingredient}
             ]);
+        }).catch(error => {
+            setError(error.message);
         });
 
     };
@@ -41,17 +45,26 @@ const Ingredients = () => {
             setUserIngredients(prevState => {
                 return prevState.filter(ing => ing.id !== id);
             });
+        }).catch(error => {
+            setError(error.message);
         });
 
     };
 
+    const clearError = () => {
+        setError(null);
+        setIsLoading(false)
+    };
+
     return (
         <div className="App">
+            {error && <ErrorModal onClose={clearError}>{error.message}</ErrorModal>}
             <IngredientForm onAddIngredient={addIngredientHandler} loading={isLoading}/>
 
             <section>
                 <Search onLoadIngredients={filteredIngredientsHandler}/>
-                <IngredientList loading={isLoading} ingredients={userIngredients} onRemoveItem={removeIngredientHandler}/>
+                <IngredientList loading={isLoading} ingredients={userIngredients}
+                                onRemoveItem={removeIngredientHandler}/>
             </section>
         </div>
     );
