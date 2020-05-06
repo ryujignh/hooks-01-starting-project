@@ -1,17 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useReducer, useState, useEffect, useCallback } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from "./IngredientList";
 import ErrorModal from "../UI/ErrorModal";
 import Search from './Search';
 
+const ingredientReducer = (currentIngredients, action) => {
+    switch (action.type) {
+        case 'SET':
+            return action.ingredients;
+        case 'ADD':
+            return [...currentIngredients, action.ingredient];
+        case 'DELETE':
+            return currentIngredients.filter(ing => ing.id !== action.id);
+        default:
+            throw new Error('Should not get here!');
+    }
+
+};
+
 const Ingredients = () => {
-    const [userIngredients, setUserIngredients] = useState([]);
+    const [userIngredients, dispatch] = useReducer(ingredientReducer, []);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     const filteredIngredientsHandler = useCallback(filteredIngredients => {
-        setUserIngredients(filteredIngredients);
+        dispatch({type: 'SET', ingredients: filteredIngredients});
     }, []);
 
 
@@ -25,11 +39,7 @@ const Ingredients = () => {
             setIsLoading(false);
             return response.json();
         }).then(responseData => {
-            setUserIngredients(prevState => [
-                ...prevState,
-                // ...ingredientと書くことでわざわざtitle, amount等を指定しなくて良くなる
-                {id: responseData.name, ...ingredient}
-            ]);
+            dispatch({type: 'ADD', ingredient: {id: responseData.name, ...ingredient}});
         }).catch(error => {
             setError(error.message);
         });
@@ -42,9 +52,7 @@ const Ingredients = () => {
             method: 'DELETE',
         }).then(response => {
             setIsLoading(false);
-            setUserIngredients(prevState => {
-                return prevState.filter(ing => ing.id !== id);
-            });
+            dispatch({type: 'DELETE', id: id});
         }).catch(error => {
             setError(error.message);
         });
@@ -53,7 +61,7 @@ const Ingredients = () => {
 
     const clearError = () => {
         setError(null);
-        setIsLoading(false)
+        setIsLoading(false);
     };
 
     return (
