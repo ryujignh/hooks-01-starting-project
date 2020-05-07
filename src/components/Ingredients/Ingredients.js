@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useCallback } from 'react';
+import React, { useReducer, useEffect, useCallback, useMemo } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from "./IngredientList";
@@ -47,39 +47,45 @@ const Ingredients = () => {
 
 
     const addIngredientHandler = ingredient => {
-        dispatchHttp({type: 'SEND'})
+        dispatchHttp({type: 'SEND'});
         fetch('https://react-hooks-update-9d1bf.firebaseio.com/ingredients.json', {
             method: 'POST',
             body: JSON.stringify(ingredient),
             headers: {'Content-Type': 'application/json'}
         }).then(response => {
-            dispatchHttp({type: 'RESPONSE'})
+            dispatchHttp({type: 'RESPONSE'});
             return response.json();
         }).then(responseData => {
             dispatch({type: 'ADD', ingredient: {id: responseData.name, ...ingredient}});
         }).catch(error => {
-            dispatchHttp({type: 'ERROR', errorMessage: error.message})
+            dispatchHttp({type: 'ERROR', errorMessage: error.message});
             // setError(error.message);
         });
 
     };
 
-    const removeIngredientHandler = id => {
-        dispatchHttp({type: 'SEND'})
+    const removeIngredientHandler = useCallback(id => {
+        dispatchHttp({type: 'SEND'});
         fetch(`https://react-hooks-update-9d1bf.firebaseio.com/ingredients/${id}.json`, {
             method: 'DELETE',
         }).then(response => {
-            dispatchHttp({type: 'RESPONSE'})
+            dispatchHttp({type: 'RESPONSE'});
             dispatch({type: 'DELETE', id: id});
         }).catch(error => {
-            dispatchHttp({type: 'ERROR', errorMessage: error.message})
+            dispatchHttp({type: 'ERROR', errorMessage: error.message});
         });
+    }, []);
 
-    };
+    const clearError = useCallback(() => {
+        dispatchHttp({type: 'CLEAR'});
+    }, []);
 
-    const clearError = () => {
-        dispatchHttp({type: 'CLEAR'})
-    };
+    const ingredientList = useMemo(() => {
+        return (
+            <IngredientList loading={httpState.loading} ingredients={userIngredients}
+                            onRemoveItem={removeIngredientHandler}/>
+        )
+    }, [userIngredients, removeIngredientHandler])
 
     return (
         <div className="App">
@@ -88,8 +94,7 @@ const Ingredients = () => {
 
             <section>
                 <Search onLoadIngredients={filteredIngredientsHandler}/>
-                <IngredientList loading={httpState.loading} ingredients={userIngredients}
-                                onRemoveItem={removeIngredientHandler}/>
+                {ingredientList}
             </section>
         </div>
     );
